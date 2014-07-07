@@ -164,7 +164,7 @@ class NetworkManager extends EventEmitter
   _connectWPA: (network)->
     d = Q.defer()
     command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > /tmp/wpa-temp.conf && sudo wpa_supplicant -D wext -i #{@wireless} -c /tmp/wpa-temp.conf && rm /tmp/wpa-temp.conf"
-    exec(command, (error, stdout, stderr)->
+    child = exec(command, (error, stdout, stderr)->
       # TODO: what can go wrong here?
       if error or stderr
         console.log(err)
@@ -174,6 +174,9 @@ class NetworkManager extends EventEmitter
       console.log "Connected!"
       d.resolve(true)
       return
+    )
+    child.stdout.on('data', (data)->
+      console.log('stdout: ' + data)
     )
     d.promise
   

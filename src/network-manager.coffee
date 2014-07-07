@@ -70,7 +70,7 @@ class NetworkManager extends EventEmitter
           else
             @emit('warning', false, "Got some errors from our scan command: ", stderr)
 
-        unless !stdout
+        unless stdout
           return
 
         content = stdout.toString()
@@ -78,6 +78,7 @@ class NetworkManager extends EventEmitter
         d.resolve networks
         return
       )
+      return
     )
     d.promise
 

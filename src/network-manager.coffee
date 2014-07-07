@@ -171,6 +171,7 @@ class NetworkManager extends EventEmitter
         console.log(stderr)
         d.reject(error)
         return
+      console.log "Connected!"
       d.resolve(true)
       return
     )

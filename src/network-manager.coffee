@@ -127,7 +127,69 @@ class NetworkManager extends EventEmitter
     networks.push network  unless _.isEmpty(network)
     networks
 
-  connect: ->
+  connect: (network) ->
+    d = Q.defer()
+    @enable().then(=>
+      if network.encryption_wep
+        p = @_connectWEP(network)
+      else if network.encryption_wpa or network.encryption_wpa2
+        p = @_connectWPA(network)
+      else 
+        p = @_connectOPEN(network)
+
+      p.then((connected)->
+        d.resolve(connected)
+      , (err)->
+        d.reject(err)
+      )
+      return
+    )
+    d.promise
+
+  _connectOPEN: (network)->
+    d = Q.defer()
+    command = "sudo iwconfig #{@wireless} essid \"#{network.ESSID}\""
+    exec(command, (error, stdout, stderr)->
+      # TODO: what can go wrong here?
+      if error or stderr
+        console.log(err)
+        console.log(stderr)
+        d.reject(error)
+        return
+      d.resolve(true)
+      return
+    )
+    d.promise
+
+  _connectWPA: (network)->
+    d = Q.defer()
+    command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > /tmp/wpa-temp.conf && sudo wpa_supplicant -D wext -i #{@wireless} -c /tmp/wpa-temp.conf && rm /tmp/wpa-temp.conf"
+    exec(command, (error, stdout, stderr)->
+      # TODO: what can go wrong here?
+      if error or stderr
+        console.log(err)
+        console.log(stderr)
+        d.reject(error)
+        return
+      d.resolve(true)
+      return
+    )
+    d.promise
+  
+  _connectWEP: (network)->
+    d = Q.defer()
+    command = "sudo iwconfig #{@wireless} essid \"#{network.ESSID}\" key #{network.PASSWORD}"
+    exec(command, (error, stdout, stderr)->
+      # TODO: what can go wrong here?
+      if error or stderr
+        console.log(err)
+        console.log(stderr)
+        d.reject(error)
+        return
+      d.resolve(true)
+      return
+    )
+    d.promise
 
   disconnect: ->
 

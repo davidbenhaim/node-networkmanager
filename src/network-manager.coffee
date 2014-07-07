@@ -134,6 +134,7 @@ class NetworkManager extends EventEmitter
     d = Q.defer()
 
     unless @enabled
+      console.log "Enabling!"
       command = "sudo ifconfig #{@wireless} up"
       exec(command, (error, stdout, stderr)=>
         if error?
@@ -145,8 +146,8 @@ class NetworkManager extends EventEmitter
           return
 
         if stdout or stderr
-          self.emit('error', false, "There was an error enabling the interface" + stdout + stderr)
-
+          @emit('error', false, "There was an error enabling the interface" + stdout + stderr)
+        console.log "Enabled!"
         @enabled = true
         d.resolve()
         return

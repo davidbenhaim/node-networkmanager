@@ -4,7 +4,7 @@ nm = new NetworkManager()
 
 nm.scan()
 .then(
-	function(networks){}
+	function(networks){
 		console.log(networks);
 	},
 	function(err){

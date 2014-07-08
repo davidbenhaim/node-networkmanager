@@ -233,7 +233,7 @@ class NetworkManager extends EventEmitter
       # TODO: what can go wrong here?
       if error or stderr
         if stderr.indexOf("RTNETLINK answers: File exists") isnt -1
-          @dhclient_release().then(@dhclient).then(
+          @dhclient_release().then(@dhclient).then(->
             d.resolve(true)
           )
         else

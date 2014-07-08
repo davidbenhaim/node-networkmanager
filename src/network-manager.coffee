@@ -172,6 +172,7 @@ class NetworkManager extends EventEmitter
     wps.stdout.pipe(process.stderr)
     wps.stderr.pipe(process.stderr)
     ondata = (buf)->
+      console.log buf.toString(), "buf"
       if (/CTRL-EVENT-CONNECTED/.test(buf)) 
         connected = true
         d.resolve(true)

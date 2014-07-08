@@ -10,7 +10,7 @@ try{
 	.then(
 		function(connected){
 			nm.disconnect().then(function(){
-				console.log("disconnected!");
+				console.log("Disconnected!");
 			})
 		},
 		function(err){

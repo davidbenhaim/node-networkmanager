@@ -154,8 +154,8 @@ class NetworkManager extends EventEmitter
         p = @_connectOPEN(network)
 
       p.then(@dhclient).then((connected)->
-        console.log 'connected here'
-        d.resolve(connected)
+        @connected = true
+        d.resolve(@connected)
       , (err)->
         d.reject(err)
       )
@@ -195,7 +195,6 @@ class NetworkManager extends EventEmitter
     wps.stderr.pipe(process.stdout)
     
     ondata = (buf)->
-      console.log "here"
       if (/CTRL-EVENT-CONNECTED/.test(buf)) or (/Key negotiation completed/.test(buf)) or (/-> GROUP_HANDSHAKE/.test(buf))
         connected = true
         d.resolve(true)

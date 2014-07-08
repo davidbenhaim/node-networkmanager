@@ -3,6 +3,7 @@ Q = require('q')
 {EventEmitter} = require('events')
 _ = require('lodash')
 exec = require('child_process').exec
+spawn = require('child_process').spawn
 
 class NetworkManager extends EventEmitter
   wireless: 'wlan0'
@@ -164,20 +165,36 @@ class NetworkManager extends EventEmitter
   _connectWPA: (network)->
     d = Q.defer()
     command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > wpa-temp.conf && sudo wpa_supplicant -D wext -i #{@wireless} -c wpa-temp.conf -B && rm wpa-temp.conf"
-    child = exec(command, (error, stdout, stderr)->
-      # TODO: what can go wrong here?
-      if error or stderr
-        console.log(err)
-        console.log(stderr)
-        d.reject(error)
-        return
-      console.log "Connected!"
-      d.resolve(true)
-      return
-    )
-    child.stdout.on('data', (data)->
-      console.log('stdout: ' + data)
-    )
+    
+    args = [ '-i', @wireless, '-c', 'wpa-temp.conf' ]
+    wps = spawn("wpa_supplicant", args)
+    wpa = true
+    wps.stdout.pipe(process.stderr)
+    wps.stderr.pipe(process.stderr)
+    ondata = (buf)->
+      if (/CTRL-EVENT-CONNECTED/.test(buf)) 
+        connected = true
+        d.resolve(true)
+      if (/CTRL-EVENT-DISCONNECTED/.test(buf)) 
+        connected = false;
+
+    wps.stdout.on('data', ondata)
+    wps.stderr.on('data', ondata)
+    
+    # child = exec(command, (error, stdout, stderr)->
+    #   # TODO: what can go wrong here?
+    #   if error or stderr
+    #     console.log(err)
+    #     console.log(stderr)
+    #     d.reject(error)
+    #     return
+    #   console.log "Connected!"
+    #   d.resolve(true)
+    #   return
+    # )
+    # child.stdout.on('data', (data)->
+    #   console.log('stdout: ' + data)
+    # )
     d.promise
   
   _connectWEP: (network)->

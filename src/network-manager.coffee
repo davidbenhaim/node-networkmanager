@@ -181,6 +181,9 @@ class NetworkManager extends EventEmitter
       if (/CTRL-EVENT-DISCONNECTED/.test(buf)) 
         connected = false
 
+    console.log(wps.stdout[1])
+    console.log(wps.stdout[2])
+    console.log(wps.stdout[3])
     wps.stdout.on('data', ondata)
     wps.stderr.on('data', ondata)
     

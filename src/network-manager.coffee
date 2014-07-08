@@ -153,7 +153,7 @@ class NetworkManager extends EventEmitter
       else 
         p = @_connectOPEN(network)
 
-      p.then(@dhclient).then((connected)->
+      p.then(@dhclient).then((connected)=>
         @connected = true
         d.resolve(@connected)
       , (err)->

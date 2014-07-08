@@ -167,7 +167,7 @@ class NetworkManager extends EventEmitter
     command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > wpa-temp.conf && sudo wpa_supplicant -D wext -i #{@wireless} -c wpa-temp.conf -B && rm wpa-temp.conf"
     
     args = [ '-i', @wireless, '-D', 'wext', '-c', '/etc/wpa_supplicant.conf']
-    wps = spawn("wpa_supplicant", args, {uid: 0, stdio: ['ignore', 'ignore', 'pipe', 'pipe']})
+    wps = spawn("wpa_supplicant", args, {uid: 0, stdio: "inherit"})
     wpa = true
 
     wps.stdout.pipe(process.stderr)
@@ -181,9 +181,6 @@ class NetworkManager extends EventEmitter
       if (/CTRL-EVENT-DISCONNECTED/.test(buf)) 
         connected = false
 
-    console.log(wps.stdout[1])
-    console.log(wps.stdout[2])
-    console.log(wps.stdout[3])
     wps.stdout.on('data', ondata)
     wps.stderr.on('data', ondata)
     

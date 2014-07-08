@@ -190,7 +190,7 @@ class NetworkManager extends EventEmitter
     
     ondata = (buf)->
       console.log "here"
-      if (/CTRL-EVENT-CONNECTED/.test(buf)) or (/Key negotiation completed/.test(buf))
+      if (/CTRL-EVENT-CONNECTED/.test(buf)) or (/Key negotiation completed/.test(buf)) or (/-> GROUP_HANDSHAKE/.test(buf))
         connected = true
         d.resolve(true)
       if (/CTRL-EVENT-DISCONNECTED/.test(buf)) 

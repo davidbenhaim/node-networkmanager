@@ -267,27 +267,45 @@ class NetworkManager extends EventEmitter
     )
     d.promise
 
+  dhclient_kill: =>
+    d = Q.defer()
+    command = "sudo dhclient #{@wireless} -x"
+    exec(command, (error, stdout, stderr)->
+      # TODO: what can go wrong here?
+      if error or stderr
+        console.log(error)
+        console.log(stderr)
+        d.reject(error)
+        return
+      console.log('dhclient -k')
+      d.resolve(true)
+      return
+    )
+    d.promise
+
   disconnect: =>
     d = Q.defer()
-
-    if @connected
-      console.log "Disconnecting!"
-      command = "sudo iwconfig #{@wireless} essid \"\""
-      exec(command, (error, stdout, stderr)=>
-        if error or stderr
-          console.log(error)
-          console.log(stderr)
-          d.reject(error)
+    @dhclient_kill().then(=>
+      if @connected
+        console.log "Disconnecting!"
+        command = "sudo iwconfig #{@wireless} essid \"\""
+        exec(command, (error, stdout, stderr)=>
+          if error or stderr
+            console.log(error)
+            console.log(stderr)
+            d.reject(error)
+            return
+          console.log "Disconnected!"
+          @connected = false
+          @clean_connection_processes()
+          d.resolve()
           return
-        console.log "Disconnected!"
-        @connected = false
-        @clean_connection_processes()
+        )
+      else
         d.resolve()
-        return
-      )
-    else
-      d.resolve()
-
+    , (err)->
+      d.reject(err)
+    )
     d.promise
 
   enable: ->

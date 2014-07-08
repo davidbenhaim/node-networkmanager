@@ -149,7 +149,7 @@ class NetworkManager extends EventEmitter
       else 
         p = @_connectOPEN(network)
 
-      p.then((connected)->
+      p.then(@dhclient).then((connected)->
         d.resolve(connected)
       , (err)->
         d.reject(err)
@@ -213,6 +213,21 @@ class NetworkManager extends EventEmitter
   _connectWEP: (network)->
     d = Q.defer()
     command = "sudo iwconfig #{@wireless} essid \"#{network.ESSID}\" key #{network.PASSWORD}"
+    exec(command, (error, stdout, stderr)->
+      # TODO: what can go wrong here?
+      if error or stderr
+        console.log(err)
+        console.log(stderr)
+        d.reject(error)
+        return
+      d.resolve(true)
+      return
+    )
+    d.promise
+
+  dhclient: ->
+    d = Q.defer()
+    command = "sudo dhclient #{@wireless}"
     exec(command, (error, stdout, stderr)->
       # TODO: what can go wrong here?
       if error or stderr

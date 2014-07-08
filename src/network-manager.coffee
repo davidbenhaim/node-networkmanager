@@ -13,6 +13,9 @@ class NetworkManager extends EventEmitter
     # List of networks (key is address)
     @networks = []
 
+    # Debug console
+    @debug = true
+
     # Update interface names
     if options.wireless?
       @wireless = options.wireless
@@ -21,7 +24,7 @@ class NetworkManager extends EventEmitter
       @wired = options.wired
 
     # ID for connection checking interval
-    @connectionSpy = null
+    @connectionSpy = setInterval @check_connection, 2*1000
 
     # True if we're shutting down
     @killing = false
@@ -171,6 +174,37 @@ class NetworkManager extends EventEmitter
     )
     d.promise
 
+  check_connection: =>
+    if @connected
+      command = "sudo iwconfig #{@wireless}"
+      exec(command, (error, stdout, stderr) =>
+        if error
+          console.log "Error getting wireless devices information"
+          throw err
+        content = stdout.toString()
+        lines = content.split(/\r\n|\r|\n/)
+        foundOutWereConnected = false
+        networkAddress = null
+        _.each lines, (line) ->
+          if line.indexOf("Access Point") isnt -1
+            networkAddress = line.match(/Access Point: ([a-fA-F0-9:]*)/)[1] or null
+            foundOutWereConnected = true  if networkAddress
+          return
+        
+        # guess we're not connected after all
+        if not foundOutWereConnected and @connected
+          console.log "We've disconnected!"
+          @connected = false
+          @emit "leave", false
+        else if foundOutWereConnected and not @connected
+          console.log "We're connected!"
+          @connected = true
+          @emit "join", false, @networks[networkAddress]
+        return
+      )
+    return
+    
+
   # This probably doesn't work yet
   _connectOPEN: (network)->
     d = Q.defer()
@@ -193,16 +227,31 @@ class NetworkManager extends EventEmitter
     
     args = ['-d', '-i', @wireless, '-D', 'wext', '-c', '/etc/wpa_supplicant.conf']
     wps = spawn("wpa_supplicant", args, {uid: 0})
+    
+    timeout = setInterval(=>
+      unless @connected
+        console.log "Re-connecting"
+        wps.kill()
+        @_connectWPA(network).then((connected)->
+          d.resolve(connected)
+        , (err)->
+          d.reject(err)
+        )
+      return
+    , 10*1000)
+
     wpa = true
     
     @wpa = wps
 
-    wps.stdout.pipe(process.stdout)
-    wps.stderr.pipe(process.stdout)
+    if @debug
+      wps.stdout.pipe(process.stdout)
+      wps.stderr.pipe(process.stdout)
     
     ondata = (buf)->
       if (/CTRL-EVENT-CONNECTED/.test(buf)) or (/Key negotiation completed/.test(buf)) or (/-> GROUP_HANDSHAKE/.test(buf))
         connected = true
+        clearInterval timeout
         d.resolve(true)
       if (/CTRL-EVENT-DISCONNECTED/.test(buf)) 
         connected = false

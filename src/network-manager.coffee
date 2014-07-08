@@ -135,6 +135,7 @@ class NetworkManager extends EventEmitter
           network.encryption_wep = true
       else if line.indexOf("ESSID") is 0
         network.ssid = line.match(/ESSID:"(.*)"/)[1]
+        network.ESSID = network.ssid
       else if line.indexOf("Mode") is 0
         network.mode = line.match(/Mode:(.*)/)[1]
       else if line.indexOf("IE: IEEE 802.11i/WPA2 Version 1") is 0

@@ -36,6 +36,8 @@ class NetworkManager extends EventEmitter
       console.log('Got SIGINT.  Killing Child Processes')
       if @wpa?
         @wpa.kill()
+      if @dhclient?
+        @dhclient.kill()
       process.exit(1)
       return
 
@@ -229,7 +231,7 @@ class NetworkManager extends EventEmitter
   dhclient: =>
     d = Q.defer()
     command = "sudo dhclient #{@wireless}"
-    exec(command, (error, stdout, stderr)=>
+    dhclient = exec(command, (error, stdout, stderr)=>
       # TODO: what can go wrong here?
       if error or stderr
         if stderr.indexOf("RTNETLINK answers: File exists") isnt -1
@@ -244,6 +246,7 @@ class NetworkManager extends EventEmitter
       d.resolve(true)
       return
     )
+    @dhclient = dhclient
     d.promise
 
   dhclient_release: =>

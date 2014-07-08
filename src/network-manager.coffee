@@ -243,10 +243,11 @@ class NetworkManager extends EventEmitter
           d.reject(error)
         return
       console.log('dhclient!')
-      @dhclient_proc = dhclient
       d.resolve(true)
       return
     )
+    console.log dhclient.pid
+    @dhclient_proc = dhclient
     d.promise
 
   dhclient_release: =>

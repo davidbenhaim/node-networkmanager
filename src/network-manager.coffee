@@ -167,10 +167,8 @@ class NetworkManager extends EventEmitter
     command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > wpa-temp.conf && sudo wpa_supplicant -D wext -i #{@wireless} -c wpa-temp.conf -B && rm wpa-temp.conf"
     
     args = [ '-i', @wireless, '-D', 'wext', '-c', '/etc/wpa_supplicant.conf']
-    wps = spawn("wpa_supplicant", args, {uid: 0})
+    wps = spawn("wpa_supplicant", args, {uid: 0, stdio: [process.stdin, process.stderr, process.stderr]})
     wpa = true
-
-    # stdio: [process.stdin, process.stdout, process.stderr]
     
     #wps.stdout.pipe(process.stderr)
     #wps.stderr.pipe(process.stderr)

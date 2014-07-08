@@ -169,8 +169,10 @@ class NetworkManager extends EventEmitter
     args = [ '-i', @wireless, '-D', 'wext', '-c', '/etc/wpa_supplicant.conf']
     wps = spawn("wpa_supplicant", args, {uid: 0, stdio: ['pipe', 'pipe', 'pipe', 'pipe']})
     wpa = true
-    # wps.stdout.pipe(process.stderr)
-    # wps.stderr.pipe(process.stderr)
+
+    wps.stdout.pipe(process.stderr)
+    wps.stderr.pipe(process.stderr)
+    
     ondata = (buf)->
       console.log("buf:"+buf.toString())
       if (/CTRL-EVENT-CONNECTED/.test(buf)) 
@@ -178,9 +180,16 @@ class NetworkManager extends EventEmitter
         d.resolve(true)
       if (/CTRL-EVENT-DISCONNECTED/.test(buf)) 
         connected = false
-    console.log(wps.stdout[1])
-    wps.stdout.on('data', ondata)
-    wps.stdin.on('data', ondata)
+
+    ondata1 = (buf)->
+      console.log("buf1:"+buf.toString())
+      if (/CTRL-EVENT-CONNECTED/.test(buf)) 
+        connected = true
+        d.resolve(true)
+      if (/CTRL-EVENT-DISCONNECTED/.test(buf)) 
+        connected = false
+
+    wps.stdout.on('data', ondata1)
     wps.stderr.on('data', ondata)
     
     # child = exec(command, (error, stdout, stderr)->

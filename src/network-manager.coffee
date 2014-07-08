@@ -166,7 +166,7 @@ class NetworkManager extends EventEmitter
     d = Q.defer()
     command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > wpa-temp.conf && sudo wpa_supplicant -D wext -i #{@wireless} -c wpa-temp.conf -B && rm wpa-temp.conf"
     
-    args = [ '-i', @wireless, '-c', 'wpa-temp.conf' ]
+    args = [ '-i', @wireless, '-D', 'wext', '-c', 'wpa-temp.conf' ]
     wps = spawn("wpa_supplicant", args)
     wpa = true
     wps.stdout.pipe(process.stderr)
@@ -176,7 +176,7 @@ class NetworkManager extends EventEmitter
         connected = true
         d.resolve(true)
       if (/CTRL-EVENT-DISCONNECTED/.test(buf)) 
-        connected = false;
+        connected = false
 
     wps.stdout.on('data', ondata)
     wps.stderr.on('data', ondata)

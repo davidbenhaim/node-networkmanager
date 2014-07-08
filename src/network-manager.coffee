@@ -227,6 +227,7 @@ class NetworkManager extends EventEmitter
 
   dhclient: ->
     d = Q.defer()
+    debugger
     command = "sudo dhclient #{@wireless}"
     exec(command, (error, stdout, stderr)->
       # TODO: what can go wrong here?

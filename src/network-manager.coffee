@@ -36,8 +36,8 @@ class NetworkManager extends EventEmitter
       console.log('Got SIGINT.  Killing Child Processes')
       if @wpa?
         @wpa.kill()
-      if @dhclient?
-        @dhclient.kill()
+      if @dhclient_proc?
+        @dhclient_proc.kill()
       process.exit(1)
       return
 
@@ -243,7 +243,7 @@ class NetworkManager extends EventEmitter
           d.reject(error)
         return
       console.log('dhclient!')
-      @dhclient = dhclient
+      @dhclient_proc = dhclient
       d.resolve(true)
       return
     )

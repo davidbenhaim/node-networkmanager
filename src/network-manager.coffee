@@ -34,10 +34,7 @@ class NetworkManager extends EventEmitter
 
     process.on 'SIGINT', ()=>
       console.log('Got SIGINT.  Killing Child Processes')
-      if @wpa?
-        @wpa.kill()
-      if @dhclient_proc?
-        @dhclient_proc.kill()
+      @clean_connection_processes()
       process.exit(1)
       return
 
@@ -91,6 +88,11 @@ class NetworkManager extends EventEmitter
       return
     )
     d.promise
+
+  clean_connection_processes: ->
+    if @wpa?
+      @wpa.kill()
+    return
 
   parseScan: (scanResults) ->
     lines = scanResults.split(/\r\n|\r|\n/)
@@ -163,6 +165,7 @@ class NetworkManager extends EventEmitter
     )
     d.promise
 
+  # This probably doesn't work yet
   _connectOPEN: (network)->
     d = Q.defer()
     command = "sudo iwconfig #{@wireless} essid \"#{network.ESSID}\""
@@ -213,6 +216,7 @@ class NetworkManager extends EventEmitter
 
     d.promise
   
+  # This probably doesn't work yet
   _connectWEP: (network)->
     d = Q.defer()
     command = "sudo iwconfig #{@wireless} essid \"#{network.ESSID}\" key #{network.PASSWORD}"
@@ -264,11 +268,32 @@ class NetworkManager extends EventEmitter
     )
     d.promise
 
-  disconnect: ->
+  disconnect: =>
+    d = Q.defer()
+
+    if @connected
+      console.log "Disconnecting!"
+      command = "sudo iwconfig #{@wireless} essid \"\""
+      exec(command, (error, stdout, stderr)=>
+        if error or stderr
+          console.log(error)
+          console.log(stderr)
+          d.reject(error)
+          return
+        console.log "Disconnected!"
+        @connected = false
+        @clean_connection_processes()
+        d.resolve()
+        return
+      )
+    else
+      d.resolve()
+
+    d.promise
 
   enable: ->
     d = Q.defer()
-    
+
     unless @enabled
       console.log "Enabling!"
       command = "sudo ifconfig #{@wireless} up"
@@ -295,7 +320,30 @@ class NetworkManager extends EventEmitter
 
 
   disable: ->
-    command = "sudo ifconfig #{@wireless} down"
-  
+    d = Q.defer()
+
+    if @enabled
+      console.log "Disabling!"
+      command = "sudo ifconfig #{@wireless} down"
+      exec(command, (error, stdout, stderr)=>
+        if error?
+          if error.message.indexOf("No such device")
+            @emit('fatal', false, "The interface " + @wireless + " does not exist.")
+            process.exit(1)
+
+          d.reject(error)
+          return
+
+        if stdout or stderr
+          @emit('error', false, "There was an error enabling the interface" + stdout + stderr)
+        console.log "Enabled!"
+        @enabled = false
+        d.resolve()
+        return
+      )
+    else
+      d.resolve()
+
+    d.promise
 
 module.exports = NetworkManager

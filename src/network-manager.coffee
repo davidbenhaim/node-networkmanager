@@ -246,8 +246,6 @@ class NetworkManager extends EventEmitter
       d.resolve(true)
       return
     )
-    console.log dhclient.pid
-    @dhclient_proc = dhclient
     d.promise
 
   dhclient_release: =>
@@ -270,8 +268,8 @@ class NetworkManager extends EventEmitter
 
   enable: ->
     d = Q.defer()
-
-    unless true
+    
+    unless @enabled
       console.log "Enabling!"
       command = "sudo ifconfig #{@wireless} up"
       exec(command, (error, stdout, stderr)=>

@@ -170,7 +170,7 @@ class NetworkManager extends EventEmitter
     wps = spawn("wpa_supplicant", args, {uid: 0, stdio: ['pipe', 'pipe', 'pipe', 'pipe']})
     wpa = true
 
-    wps.stdout.pipe(process.stderr)
+    wps.stdout.pipe(process.stdout)
     wps.stderr.pipe(process.stderr)
     
     ondata = (buf)->

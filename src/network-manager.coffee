@@ -183,7 +183,7 @@ class NetworkManager extends EventEmitter
 
     wps.stdout.on('data', ondata)
     wps.stderr.on('data', ondata)
-    
+    console.log(wps.stdio)
     # child = exec(command, (error, stdout, stderr)->
     #   # TODO: what can go wrong here?
     #   if error or stderr

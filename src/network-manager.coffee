@@ -166,7 +166,7 @@ class NetworkManager extends EventEmitter
     exec(command, (error, stdout, stderr)->
       # TODO: what can go wrong here?
       if error or stderr
-        console.log(err)
+        console.log(error)
         console.log(stderr)
         d.reject(error)
         return
@@ -216,7 +216,7 @@ class NetworkManager extends EventEmitter
     exec(command, (error, stdout, stderr)->
       # TODO: what can go wrong here?
       if error or stderr
-        console.log(err)
+        console.log(error)
         console.log(stderr)
         d.reject(error)
         return
@@ -231,7 +231,7 @@ class NetworkManager extends EventEmitter
     exec(command, (error, stdout, stderr)->
       # TODO: what can go wrong here?
       if error or stderr
-        console.log(err)
+        console.log(error)
         console.log(stderr)
         d.reject(error)
         return

@@ -167,7 +167,7 @@ class NetworkManager extends EventEmitter
     command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > wpa-temp.conf && sudo wpa_supplicant -D wext -i #{@wireless} -c wpa-temp.conf -B && rm wpa-temp.conf"
     
     args = [ '-i', @wireless, '-D', 'wext', '-c', '/etc/wpa_supplicant.conf']
-    wps = spawn("wpa_supplicant", args, {uid: 0, stdio: 'inherit'})
+    wps = spawn("wpa_supplicant", args, {uid: 0, stdio: 'pipe'})
     wpa = true
     
     #wps.stdout.pipe(process.stderr)
@@ -182,10 +182,11 @@ class NetworkManager extends EventEmitter
         connected = false
 
     console.log "here"
-    wps.stdout.on('data', ondata)
+    wps.stdout.on('data', process.stdout.write)
     console.log "here"
-    # wps.stderr.on('data', ondata)
-
+    wps.stderr.on('data', process.stdout.write)
+    console.log "here"
+    
     # child = exec(command, (error, stdout, stderr)->
     #   # TODO: what can go wrong here?
     #   if error or stderr

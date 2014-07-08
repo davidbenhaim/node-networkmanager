@@ -255,7 +255,7 @@ class NetworkManager extends EventEmitter
         console.log(stderr)
         d.reject(error)
         return
-      console.log('dhclient!')
+      console.log('dhclient -r')
       d.resolve(true)
       return
     )

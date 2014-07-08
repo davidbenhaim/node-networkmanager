@@ -166,7 +166,7 @@ class NetworkManager extends EventEmitter
     d = Q.defer()
     command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > wpa-temp.conf && sudo wpa_supplicant -D wext -i #{@wireless} -c wpa-temp.conf -B && rm wpa-temp.conf"
     
-    args = [ '-i', @wireless, '-D', 'wext', '-c', 'wpa-temp.conf']
+    args = [ '-i', @wireless, '-D', 'wext', '-c', '/etc/wpa_supplicant.conf']
     wps = spawn("wpa_supplicant", args, {uid: 0})
     wpa = true
     # wps.stdout.pipe(process.stderr)

@@ -134,7 +134,11 @@ class NetworkManager extends EventEmitter
       if network.encryption_wep
         p = @_connectWEP(network)
       else if network.encryption_wpa or network.encryption_wpa2
-        p = @_connectWPA(network)
+        try
+          p = @_connectWPA(network)
+        catch err
+          console.log err
+          d.reject err
       else 
         p = @_connectOPEN(network)
 
@@ -168,15 +172,14 @@ class NetworkManager extends EventEmitter
     d = Q.defer()
     command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > wpa-temp.conf && sudo wpa_supplicant -D wext -i #{@wireless} -c wpa-temp.conf -B && rm wpa-temp.conf"
     
-    args = [ '-i', @wireless, '-D', 'wext', '-c', '/etc/wpa_supplicant.conf']
+    args = ['-d', '-i', @wireless, '-D', 'wext', '-c', '/etc/wpa_supplicant.conf']
     wps = spawn("wpa_supplicant", args, {uid: 0})
     wpa = true
     
-    #wps.stdout.pipe(process.stderr)
-    #wps.stderr.pipe(process.stderr)
+    wps.stdout.pipe(process.stdout)
+    wps.stderr.pipe(process.stdout)
     
     ondata = (buf)->
-      console.log("buf:"+buf.toString())
       if (/CTRL-EVENT-CONNECTED/.test(buf)) 
         connected = true
         d.resolve(true)
@@ -184,11 +187,16 @@ class NetworkManager extends EventEmitter
         connected = false
       return
 
-    console.log "here"
-    wps.stdout.on('data', console.log)
-    console.log "here"
-    # wps.stderr.on('data', console.log)
-    console.log "here"
+    wps.stdout.on('data', ondata)
+    wps.stderr.on('data', ondata)
+
+    wps.on "error", ->
+      console.log "error"
+      d.reject()
+
+    wps.on "close", ->
+      console.log "close"
+      d.reject()
 
     d.promise
   
@@ -212,7 +220,7 @@ class NetworkManager extends EventEmitter
   enable: ->
     d = Q.defer()
 
-    unless @enabled
+    unless true
       console.log "Enabling!"
       command = "sudo ifconfig #{@wireless} up"
       exec(command, (error, stdout, stderr)=>

@@ -5,12 +5,17 @@ nm = new NetworkManager()
 
 network = require('./network.json')
 
-nm.connect(network)
-.then(
-	function(connected){
-		console.log("connected!");
-	},
-	function(err){
-		console.log(err);
-	}
-)
+try{
+	nm.connect(network)
+	.then(
+		function(connected){
+			console.log("connected!");
+		},
+		function(err){
+			console.log("error");
+			console.log(err);
+		}
+	)
+}catch (err){
+	console.log(err)
+}

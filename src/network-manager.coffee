@@ -182,13 +182,12 @@ class NetworkManager extends EventEmitter
         d.resolve(true)
       if (/CTRL-EVENT-DISCONNECTED/.test(buf)) 
         connected = false
+
     console.log "here"
     wps.stdout.on('data', ondata)
     console.log "here"
-    wps.stderr.on('data', ondata)
-    console.log "here"
-    console.log(wps.stdio)
-    debugger
+    # wps.stderr.on('data', ondata)
+
     # child = exec(command, (error, stdout, stderr)->
     #   # TODO: what can go wrong here?
     #   if error or stderr

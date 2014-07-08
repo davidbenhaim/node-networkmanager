@@ -38,6 +38,12 @@ class NetworkManager extends EventEmitter
       process.exit(1)
       return
 
+    process.on 'SIGTERM', ()=>
+      console.log('Got SIGTERM.  Killing Child Processes')
+      @clean_connection_processes()
+      process.exit(1)
+      return
+
     # Configuration settings
     @commands = {
       scan: 'sudo iwlist :INTERFACE scan',

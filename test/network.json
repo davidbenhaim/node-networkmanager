@@ -1,8 +1,0 @@
-{
-	"ESSID":"MF",
-	"PASSWORD": "carbonprint3r!",
-	"encryption_any": true,
-	"encryption_wep": false,
-	"encryption_wpa": false,
-	"encryption_wpa2": true
-}

@@ -163,7 +163,7 @@ class NetworkManager extends EventEmitter
 
   _connectWPA: (network)->
     d = Q.defer()
-    command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > wpa-temp.conf && sudo wpa_supplicant -D wext -i #{@wireless} -c wpa-temp.conf && rm wpa-temp.conf"
+    command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > wpa-temp.conf && sudo wpa_supplicant -D wext -i #{@wireless} -c wpa-temp.conf -B && rm wpa-temp.conf"
     child = exec(command, (error, stdout, stderr)->
       # TODO: what can go wrong here?
       if error or stderr

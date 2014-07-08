@@ -228,6 +228,26 @@ class NetworkManager extends EventEmitter
   dhclient: =>
     d = Q.defer()
     command = "sudo dhclient #{@wireless}"
+    exec(command, (error, stdout, stderr)=>
+      # TODO: what can go wrong here?
+      if error or stderr
+        if stderr.indexOf("RTNETLINK answers: File exists") isnt -1
+          @dhclient_release().then(@dhclient).then(
+            d.resolve(true)
+          )
+        else
+          console.log(stderr)
+          d.reject(error)
+        return
+      console.log('dhclient!')
+      d.resolve(true)
+      return
+    )
+    d.promise
+
+  dhclient_release: =>
+    d = Q.defer()
+    command = "sudo dhclient #{@wireless} -r"
     exec(command, (error, stdout, stderr)->
       # TODO: what can go wrong here?
       if error or stderr

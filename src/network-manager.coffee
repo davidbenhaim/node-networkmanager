@@ -144,6 +144,8 @@ class NetworkManager extends EventEmitter
         d.reject(err)
       )
       return
+    , (err)->
+      console.log err
     )
     d.promise
 
@@ -180,27 +182,14 @@ class NetworkManager extends EventEmitter
         d.resolve(true)
       if (/CTRL-EVENT-DISCONNECTED/.test(buf)) 
         connected = false
+      return
 
     console.log "here"
     wps.stdout.on('data', console.log)
     console.log "here"
-    wps.stderr.on('data', console.log)
+    # wps.stderr.on('data', console.log)
     console.log "here"
 
-    # child = exec(command, (error, stdout, stderr)->
-    #   # TODO: what can go wrong here?
-    #   if error or stderr
-    #     console.log(err)
-    #     console.log(stderr)
-    #     d.reject(error)
-    #     return
-    #   console.log "Connected!"
-    #   d.resolve(true)
-    #   return
-    # )
-    # child.stdout.on('data', (data)->
-    #   console.log('stdout: ' + data)
-    # )
     d.promise
   
   _connectWEP: (network)->

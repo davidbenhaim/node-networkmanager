@@ -150,6 +150,7 @@ class NetworkManager extends EventEmitter
         p = @_connectOPEN(network)
 
       p.then(@dhclient).then((connected)->
+        console.log 'connected here'
         d.resolve(connected)
       , (err)->
         d.reject(err)

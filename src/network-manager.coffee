@@ -32,6 +32,13 @@ class NetworkManager extends EventEmitter
     # Is the wireless interface up?
     @enabled = false
 
+    process.on 'SIGINT', ()=>
+      console.log('Got SIGINT.  Killing Child Processes')
+      if @wpa?
+        @wpa.kill()
+      process.exit(1)
+      return
+
     # Configuration settings
     @commands = {
       scan: 'sudo iwlist :INTERFACE scan',

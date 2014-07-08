@@ -176,6 +176,7 @@ class NetworkManager extends EventEmitter
 
   check_connection: =>
     if @connected
+      console.log "checking connection"
       command = "sudo iwconfig #{@wireless}"
       exec(command, (error, stdout, stderr) =>
         if error
@@ -230,7 +231,7 @@ class NetworkManager extends EventEmitter
     
     timeout = setInterval(=>
       unless @connected
-        console.log "Re-connecting"
+        console.log "Re-Connecting"
         wps.kill()
         @_connectWPA(network).then((connected)->
           d.resolve(connected)

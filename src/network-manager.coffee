@@ -156,7 +156,7 @@ class NetworkManager extends EventEmitter
         p = @_connectWEP(network)
       else if network.encryption_wpa or network.encryption_wpa2
         try
-          p = @_connectWPA(network)
+          p = @_write_wpa_password_file(network).then(@_connectWPA)
         catch err
           console.log err
           d.reject err
@@ -165,6 +165,7 @@ class NetworkManager extends EventEmitter
 
       p.then(@dhclient).then((connected)=>
         @connected = true
+        @emit 'connected', network
         d.resolve(@connected)
       , (err)->
         d.reject(err)
@@ -197,7 +198,7 @@ class NetworkManager extends EventEmitter
         if not foundOutWereConnected and @connected
           console.log "We've disconnected!"
           @connected = false
-          @emit "leave", false
+          @emit "disconnected", false
         else if foundOutWereConnected and not @connected
           console.log "We're connected!"
           @connected = true
@@ -223,10 +224,21 @@ class NetworkManager extends EventEmitter
     )
     d.promise
 
+
+  _write_wpa_password_file: (network)->
+    d = Q.defer()
+    command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > /etc/wpa_supplicant.conf"
+    exec(command, (error, stdout, stderr)->
+      if error or stderr
+        console.log stdout
+        d.reject error
+        return
+      d.resolve(network)
+    )
+    d.promise
+
   _connectWPA: (network)->
     d = Q.defer()
-    command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > wpa-temp.conf && sudo wpa_supplicant -D wext -i #{@wireless} -c wpa-temp.conf -B && rm wpa-temp.conf"
-    
     args = ["wpa_supplicant", '-d', '-i', @wireless, '-D', 'wext', '-c', '/etc/wpa_supplicant.conf']
     wps = spawn("sudo", args)
     
@@ -354,6 +366,7 @@ class NetworkManager extends EventEmitter
             return
           console.log "Disconnected!"
           @connected = false
+          @emit 'disconnected'
           @clean_connection_processes()
           d.resolve()
           return

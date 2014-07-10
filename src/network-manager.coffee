@@ -24,7 +24,7 @@ class NetworkManager extends EventEmitter
       @wired = options.wired
 
     # ID for connection checking interval
-    @connectionSpy = setInterval @check_connection, 2*1000
+    @connectionSpy = setInterval @check_connection, 5*1000
 
     # True if we're shutting down
     @killing = false
@@ -227,7 +227,7 @@ class NetworkManager extends EventEmitter
 
   _write_wpa_password_file: (network)->
     d = Q.defer()
-    command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > /etc/wpa_supplicant.conf"
+    command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > ./wpa_supplicant.conf"
     exec(command, (error, stdout, stderr)->
       if error or stderr
         console.log stdout
@@ -239,7 +239,7 @@ class NetworkManager extends EventEmitter
 
   _connectWPA: (network)->
     d = Q.defer()
-    args = ["wpa_supplicant", '-d', '-i', @wireless, '-D', 'wext', '-c', '/etc/wpa_supplicant.conf']
+    args = ["wpa_supplicant", '-d', '-i', @wireless, '-D', 'wext', '-c', './wpa_supplicant.conf']
     wps = spawn("sudo", args)
     
     timeout = setInterval(=>

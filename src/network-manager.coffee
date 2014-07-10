@@ -227,7 +227,7 @@ class NetworkManager extends EventEmitter
 
   _write_wpa_password_file: (network)->
     d = Q.defer()
-    command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > ./wpa_supplicant.conf"
+    command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > /etc/wpa_supplicant.conf"
     exec(command, (error, stdout, stderr)->
       if error or stderr
         console.log stdout
@@ -237,10 +237,9 @@ class NetworkManager extends EventEmitter
     )
     d.promise
 
-  _connectWPA: (network)->
+  _connectWPA: (network) =>
     d = Q.defer()
-    args = ["wpa_supplicant", '-d', '-i', @wireless, '-D', 'wext', '-c', './wpa_supplicant.conf']
-    console.log args
+    args = ["wpa_supplicant", '-d', '-i', @wireless, '-D', 'wext', '-c', '/etc/wpa_supplicant.conf']
     wps = spawn("sudo", args)
     
     timeout = setInterval(=>

@@ -240,6 +240,7 @@ class NetworkManager extends EventEmitter
   _connectWPA: (network)->
     d = Q.defer()
     args = ["wpa_supplicant", '-d', '-i', @wireless, '-D', 'wext', '-c', './wpa_supplicant.conf']
+    console.log args
     wps = spawn("sudo", args)
     
     timeout = setInterval(=>
@@ -274,8 +275,8 @@ class NetworkManager extends EventEmitter
     wps.stdout.on('data', ondata)
     wps.stderr.on('data', ondata)
 
-    wps.on "error", ->
-      console.log "error"
+    wps.on "error", (err) ->
+      console.log "error", err
       d.reject()
 
     wps.on "close", ->

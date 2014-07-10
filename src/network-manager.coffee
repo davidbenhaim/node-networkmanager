@@ -252,7 +252,7 @@ class NetworkManager extends EventEmitter
           d.reject(err)
         )
       return
-    , 10*1000)
+    , 20*1000)
 
     wpa = true
     

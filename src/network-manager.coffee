@@ -389,7 +389,7 @@ class NetworkManager extends EventEmitter
     )
     d.promise
 
-  enable: ->
+  enable: =>
     d = Q.defer()
 
     unless @enabled
@@ -417,7 +417,7 @@ class NetworkManager extends EventEmitter
     d.promise
 
 
-  disable: ->
+  disable: =>
     d = Q.defer()
 
     if @enabled

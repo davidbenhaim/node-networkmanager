@@ -251,7 +251,7 @@ class NetworkManager extends EventEmitter
     args = ["wpa_supplicant", '-d', '-i', @wireless, '-D', 'wext', '-c', '/tmp/wpa_supplicant.conf']
     wps = spawn("sudo", args)
     
-    timeout = setTimout(=>
+    timeout = setTimeout(=>
       unless @connected
         console.log "Re-Connecting"
         exec('kill ' + wps.pid)

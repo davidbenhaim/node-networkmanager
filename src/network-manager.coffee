@@ -149,9 +149,15 @@ class NetworkManager extends EventEmitter
     networks.push network  unless _.isEmpty(network)
     networks
 
-  connect: (network) ->
+  connect: (network) =>
     d = Q.defer()
-    @enable().then(=>
+    if @connected
+      p = @disconnect()
+    else
+      p = Q.defer()
+      p.resolve()
+
+    p.then(@enable).then(=>
       if network.encryption_wep
         p = @_connectWEP(network)
       else if network.encryption_wpa or network.encryption_wpa2
@@ -173,7 +179,9 @@ class NetworkManager extends EventEmitter
       return
     , (err)->
       console.log err
+      d.reject(err)
     )
+
     d.promise
 
   check_connection: =>
@@ -209,7 +217,7 @@ class NetworkManager extends EventEmitter
     
 
   # This probably doesn't work yet
-  _connectOPEN: (network)->
+  _connectOPEN: (network)=>
     d = Q.defer()
     command = "sudo iwconfig #{@wireless} essid \"#{network.ESSID}\""
     exec(command, (error, stdout, stderr)->
@@ -225,7 +233,7 @@ class NetworkManager extends EventEmitter
     d.promise
 
 
-  _write_wpa_password_file: (network)->
+  _write_wpa_password_file: (network)=>
     d = Q.defer()
     command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > /tmp/wpa_supplicant.conf"
     exec(command, (error, stdout, stderr)->
@@ -246,11 +254,12 @@ class NetworkManager extends EventEmitter
       unless @connected
         console.log "Re-Connecting"
         wps.kill()
-        @_connectWPA(network).then((connected)->
-          d.resolve(connected)
-        , (err)->
-          d.reject(err)
-        )
+        d.reject()
+        # @_connectWPA(network).then((connected)->
+        #   d.resolve(connected)
+        # , (err)->
+        #   d.reject(err)
+        # )
       return
     , 20*1000)
 
@@ -285,7 +294,7 @@ class NetworkManager extends EventEmitter
     d.promise
   
   # This probably doesn't work yet
-  _connectWEP: (network)->
+  _connectWEP: (network)=>
     d = Q.defer()
     command = "sudo iwconfig #{@wireless} essid \"#{network.ESSID}\" key #{network.PASSWORD}"
     exec(command, (error, stdout, stderr)->

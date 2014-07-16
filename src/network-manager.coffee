@@ -254,12 +254,11 @@ class NetworkManager extends EventEmitter
       unless @connected
         console.log "Re-Connecting"
         wps.kill()
-        d.reject()
-        # @_connectWPA(network).then((connected)->
-        #   d.resolve(connected)
-        # , (err)->
-        #   d.reject(err)
-        # )
+        @_connectWPA(network).then((connected)->
+          d.resolve(connected)
+        , (err)->
+          d.reject(err)
+        )
       return
     , 20*1000)
 
@@ -278,6 +277,7 @@ class NetworkManager extends EventEmitter
         d.resolve(true)
       if (/CTRL-EVENT-DISCONNECTED/.test(buf)) 
         connected = false
+      "wlan0: Association request to the driver failed"
       return
 
     wps.stdout.on('data', ondata)

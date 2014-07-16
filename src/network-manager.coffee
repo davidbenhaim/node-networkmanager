@@ -156,6 +156,7 @@ class NetworkManager extends EventEmitter
     else
       p = Q.defer()
       p.resolve()
+      p = p.promise
 
     p.then(@enable).then(=>
       if network.encryption_wep
@@ -254,11 +255,12 @@ class NetworkManager extends EventEmitter
       unless @connected
         console.log "Re-Connecting"
         wps.kill()
-        @_connectWPA(network).then((connected)->
-          d.resolve(connected)
-        , (err)->
-          d.reject(err)
-        )
+        d.reject()
+        # @_connectWPA(network).then((connected)->
+        #   d.resolve(connected)
+        # , (err)->
+        #   d.reject(err)
+        # )
       return
     , 20*1000)
 

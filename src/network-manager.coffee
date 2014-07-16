@@ -100,7 +100,7 @@ class NetworkManager extends EventEmitter
 
   clean_connection_processes: ->
     if @wpa?
-      exec('kill ' + @wpa.pid)      
+      exec('sudo kill ' + @wpa.pid)      
     return
 
   parseScan: (scanResults) ->
@@ -254,7 +254,7 @@ class NetworkManager extends EventEmitter
     timeout = setTimeout(=>
       unless @connected
         console.log "Re-Connecting"
-        exec('kill ' + wps.pid)
+        exec('sudo kill ' + wps.pid)
         @_connectWPA(network).then((connected)->
           d.resolve(connected)
         , (err)->

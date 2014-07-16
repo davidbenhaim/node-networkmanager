@@ -248,19 +248,18 @@ class NetworkManager extends EventEmitter
 
   _connectWPA: (network) =>
     d = Q.defer()
-    args = ["wpa_supplicant", '-d', '-i', @wireless, '-D', 'wext', '-c', '/tmp/wpa_supplicant.conf']
+    args = ["wpa_supplicant", '-d', "-i#{@wireless}", '-Dwext', '-c/tmp/wpa_supplicant.conf']
     wps = spawn("sudo", args)
     
     timeout = setTimeout(=>
       unless @connected
         console.log "Re-Connecting"
         exec('kill ' + wps.pid)
-        d.reject()
-        # @_connectWPA(network).then((connected)->
-        #   d.resolve(connected)
-        # , (err)->
-        #   d.reject(err)
-        # )
+        @_connectWPA(network).then((connected)->
+          d.resolve(connected)
+        , (err)->
+          d.reject(err)
+        )
       return
     , 20*1000)
 

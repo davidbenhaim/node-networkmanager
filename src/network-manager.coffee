@@ -126,7 +126,7 @@ class NetworkManager extends EventEmitter
       else if line.indexOf("Channel") is 0
         network.channel = line.match(/Channel:([0-9]{1,2})/)[1]
       else if line.indexOf("Quality") is 0
-        network.quality = line.match(/Quality=([0-9]{1,2})\/70/)[1]
+        network.quality = parseInt(line.match(/Quality=([0-9]{1,2})\/70/)[1])/70
         network.strength = line.match(/Signal level=(-?[0-9]{1,2}) dBm/)[1]
       else if line.indexOf("Encryption key") is 0
         enc = line.match(/Encryption key:(on|off)/)[1]

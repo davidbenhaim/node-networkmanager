@@ -163,7 +163,7 @@ class NetworkManager extends EventEmitter
         p = @_connectWEP(network)
       else if network.encryption_wpa or network.encryption_wpa2
         try
-          p = @_write_wpa_password_file(network).then(@_connectWPA)
+          p = @_write_wpa_password_file(network).then(@dhclient_kill).then(@_connectWPA)
         catch err
           console.log err
           d.reject err
@@ -251,7 +251,7 @@ class NetworkManager extends EventEmitter
     args = ["wpa_supplicant", '-d', '-i', @wireless, '-D', 'wext', '-c', '/tmp/wpa_supplicant.conf']
     wps = spawn("sudo", args)
     
-    timeout = setInterval(=>
+    timeout = setTimout(=>
       unless @connected
         console.log "Re-Connecting"
         exec('kill ' + wps.pid)

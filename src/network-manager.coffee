@@ -32,6 +32,10 @@ class NetworkManager extends EventEmitter
     # True if we're connected to a network
     @connected = false
 
+    #are we currently trying to connect? 
+    #TODO
+    @trying_to_connect = false
+
     # Is the wireless interface up?
     @enabled = false
 
@@ -157,6 +161,8 @@ class NetworkManager extends EventEmitter
       p = Q.defer()
       p.resolve()
       p = p.promise
+    
+    @emit 'connecting', network
 
     p.then(@enable).then(=>
       if network.encryption_wep
@@ -176,10 +182,12 @@ class NetworkManager extends EventEmitter
         d.resolve(@connected)
       , (err)->
         d.reject(err)
+        @emit 'connection_failed'
       )
       return
     , (err)->
       console.log err
+      @emit 'connection_failed'
       d.reject(err)
     )
 
@@ -390,7 +398,6 @@ class NetworkManager extends EventEmitter
 
   enable: =>
     d = Q.defer()
-
     unless @enabled
       console.log "Enabling!"
       command = "sudo ifconfig #{@wireless} up"
@@ -422,6 +429,8 @@ class NetworkManager extends EventEmitter
     if @enabled
       console.log "Disabling!"
       command = "sudo ifconfig #{@wireless} down"
+      @dhclient_kill()
+      @clean_connection_processes()
       exec(command, (error, stdout, stderr)=>
         if error?
           if error.message.indexOf("No such device")

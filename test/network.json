@@ -1,0 +1,26 @@
+{
+	"wpa": {
+		"ESSID":"test_wpa",
+		"PASSWORD": "markforg3d",
+		"encryption_any": true,
+		"encryption_wep": false,
+		"encryption_wpa": false,
+		"encryption_wpa2": true
+	},
+	"wep":{
+		"ESSID":"test_wep",
+		"PASSWORD": "",
+		"encryption_any": true,
+		"encryption_wep": true,
+		"encryption_wpa": false,
+		"encryption_wpa2": false
+	},
+	"open":{
+		"ESSID":"test_open",
+		"PASSWORD": "",
+		"encryption_any": false,
+		"encryption_wep": false,
+		"encryption_wpa": false,
+		"encryption_wpa2": false
+	}
+}

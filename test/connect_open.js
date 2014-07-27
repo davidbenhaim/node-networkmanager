@@ -3,15 +3,13 @@ var NetworkManager = require('../lib/network-manager')
 
 nm = new NetworkManager()
 
-network = require('./network.json').wpa
+network = require('./network.json').open
 
 try{
 	nm.connect(network)
 	.then(
 		function(connected){
-			nm.disconnect().then(function(){
-				console.log("Disconnected!");
-			})
+			console.log("connected!");
 		},
 		function(err){
 			console.log("error");

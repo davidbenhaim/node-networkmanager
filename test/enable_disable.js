@@ -3,7 +3,7 @@ var NetworkManager = require('../lib/network-manager')
 
 nm = new NetworkManager()
 
-network = require('./network.json')
+network = require('./network.json').wpa
 
 try{
 	nm.enable()

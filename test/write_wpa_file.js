@@ -4,7 +4,7 @@ var fs = require('fs')
 
 var nm = new NetworkManager()
 
-var network = require('./network.json')
+var network = require('./network.json').wpa
 
 try{
 	nm._write_wpa_password_file(network)

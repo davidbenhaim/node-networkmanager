@@ -407,7 +407,7 @@ class NetworkManager extends EventEmitter
         if error?
           if error.message.indexOf("No such device")
             @emit('fatal', false, "The interface " + @wireless + " does not exist.")
-            process.exit(1)
+            # process.exit(1)
 
           d.reject(error)
           return
@@ -438,7 +438,7 @@ class NetworkManager extends EventEmitter
         if error?
           if error.message.indexOf("No such device")
             @emit('fatal', false, "The interface " + @wireless + " does not exist.")
-            process.exit(1)
+            # process.exit(1)
 
           d.reject(error)
           return

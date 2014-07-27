@@ -34,7 +34,7 @@ class NetworkManager extends EventEmitter
 
     #are we currently trying to connect? 
     #TODO
-    @trying_to_connect = false
+    @connecting = false
 
     # Is the wireless interface up?
     @enabled = false
@@ -162,6 +162,7 @@ class NetworkManager extends EventEmitter
       p.resolve()
       p = p.promise
     
+    @connecting = true
     @emit 'connecting', network
 
     p.then(@enable).then(=>
@@ -178,6 +179,7 @@ class NetworkManager extends EventEmitter
 
       p.then(@dhclient).then((connected)=>
         @connected = true
+        @connecting = false
         @emit 'connected', network
         d.resolve(@connected)
       , (err)->
@@ -430,6 +432,7 @@ class NetworkManager extends EventEmitter
       console.log "Disabling!"
       command = "sudo ifconfig #{@wireless} down"
       @dhclient_kill()
+      @connecting = false
       @clean_connection_processes()
       exec(command, (error, stdout, stderr)=>
         if error?
@@ -442,7 +445,7 @@ class NetworkManager extends EventEmitter
 
         if stdout or stderr
           @emit('error', false, "There was an error enabling the interface" + stdout + stderr)
-        console.log "Enabled!"
+        console.log "Disabled!"
         @enabled = false
         d.resolve()
         return

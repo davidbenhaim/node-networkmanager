@@ -327,7 +327,7 @@ class NetworkManager extends EventEmitter
     d.promise
 
   dhclient: (iface) =>
-    d = Q.defer(int)
+    d = Q.defer()
     iface = iface or @wireless
     command = "sudo dhclient #{iface}"
     dhclient = exec(command, (error, stdout, stderr)=>

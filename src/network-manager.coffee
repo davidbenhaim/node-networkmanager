@@ -170,14 +170,20 @@ class NetworkManager extends EventEmitter
         p = @_connectWEP(network)
       else if network.encryption_wpa or network.encryption_wpa2
         try
-          p = @_write_wpa_password_file(network).then(@dhclient_kill).then(@_connectWPA)
+          p = @_write_wpa_password_file(network)
+          .then(()->
+            @dhclient_kill()
+            )
+          .then(@_connectWPA)
         catch err
           console.log err
           d.reject err
       else 
         p = @_connectOPEN(network)
 
-      p.then(@dhclient).then((connected)=>
+      p.then(->
+        @dhclient()
+      ).then((connected)=>
         @connected = true
         @connecting = false
         @emit 'connected', network
@@ -320,14 +326,15 @@ class NetworkManager extends EventEmitter
     )
     d.promise
 
-  dhclient: =>
-    d = Q.defer()
-    command = "sudo dhclient #{@wireless}"
+  dhclient: (iface) =>
+    d = Q.defer(int)
+    iface = iface or @wireless
+    command = "sudo dhclient #{iface}"
     dhclient = exec(command, (error, stdout, stderr)=>
       # TODO: what can go wrong here?
       if error or stderr
         if stderr.indexOf("RTNETLINK answers: File exists") isnt -1
-          @dhclient_release().then(@dhclient).then(->
+          @dhclient_release().then(-> @dhclient()).then(->
             d.resolve(true)
           )
         else
@@ -340,9 +347,10 @@ class NetworkManager extends EventEmitter
     )
     d.promise
 
-  dhclient_release: =>
+  dhclient_release: (iface) =>
     d = Q.defer()
-    command = "sudo dhclient #{@wireless} -r"
+    iface = iface or @wireless
+    command = "sudo dhclient #{iface} -r"
     exec(command, (error, stdout, stderr)->
       # TODO: what can go wrong here?
       if error or stderr
@@ -356,9 +364,10 @@ class NetworkManager extends EventEmitter
     )
     d.promise
 
-  dhclient_kill: =>
+  dhclient_kill: (iface) =>
     d = Q.defer()
-    command = "sudo dhclient #{@wireless} -x"
+    iface = iface or @wireless
+    command = "sudo dhclient #{iface} -x"
     exec(command, (error, stdout, stderr)->
       # TODO: what can go wrong here?
       if error or stderr

@@ -171,7 +171,7 @@ class NetworkManager extends EventEmitter
       else if network.encryption_wpa or network.encryption_wpa2
         try
           p = @_write_wpa_password_file(network)
-          .then(()->
+          .then(()=>
             @dhclient_kill()
             )
           .then(@_connectWPA)
@@ -181,7 +181,7 @@ class NetworkManager extends EventEmitter
       else 
         p = @_connectOPEN(network)
 
-      p.then(->
+      p.then(=>
         @dhclient()
       ).then((connected)=>
         @connected = true
@@ -334,7 +334,7 @@ class NetworkManager extends EventEmitter
       # TODO: what can go wrong here?
       if error or stderr
         if stderr.indexOf("RTNETLINK answers: File exists") isnt -1
-          @dhclient_release().then(-> @dhclient()).then(->
+          @dhclient_release().then(=> @dhclient()).then(->
             d.resolve(true)
           )
         else

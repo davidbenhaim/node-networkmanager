@@ -32,7 +32,7 @@ class NetworkManager extends EventEmitter
     # True if we're connected to a network
     @connected = false
 
-    #are we currently trying to connect? 
+    #are we currently trying to connect?
     #TODO
     @connecting = false
 
@@ -104,7 +104,7 @@ class NetworkManager extends EventEmitter
 
   clean_connection_processes: ->
     if @wpa?
-      exec('sudo kill ' + @wpa.pid)      
+      exec('sudo kill ' + @wpa.pid)
     return
 
   parseScan: (scanResults) ->
@@ -114,7 +114,7 @@ class NetworkManager extends EventEmitter
     network = {}
     _.each lines, (line) ->
       line = line.replace(/^\s+|\s+$/g, "")
-      
+
       # a "Cell" line means that we've found a start of a new network
       if line.indexOf("Cell") is 0
         networkCount++
@@ -161,7 +161,7 @@ class NetworkManager extends EventEmitter
       p = Q.defer()
       p.resolve()
       p = p.promise
-    
+
     @connecting = true
     @emit 'connecting', network
 
@@ -178,7 +178,7 @@ class NetworkManager extends EventEmitter
         catch err
           console.log err
           d.reject err
-      else 
+      else
         p = @_connectOPEN(network)
 
       p.then(=>
@@ -218,7 +218,7 @@ class NetworkManager extends EventEmitter
             networkAddress = line.match(/Access Point: ([a-fA-F0-9:]*)/)[1] or null
             foundOutWereConnected = true  if networkAddress
           return
-        
+
         # guess we're not connected after all
         if not foundOutWereConnected and @connected
           console.log "We've disconnected!"
@@ -231,7 +231,7 @@ class NetworkManager extends EventEmitter
         return
       )
     return
-    
+
 
   # This probably doesn't work yet
   _connectOPEN: (network)=>
@@ -264,9 +264,10 @@ class NetworkManager extends EventEmitter
 
   _connectWPA: (network) =>
     d = Q.defer()
+    @clean_connection_processes()
     args = ["wpa_supplicant", '-d', "-i#{@wireless}", '-Dwext', '-c/tmp/wpa_supplicant.conf']
     wps = spawn("sudo", args)
-    
+
     timeout = setTimeout(=>
       unless @connected
         console.log "Re-Connecting"
@@ -280,19 +281,19 @@ class NetworkManager extends EventEmitter
     , 20*1000)
 
     wpa = true
-    
+
     @wpa = wps
 
     if @debug
       wps.stdout.pipe(process.stdout)
       wps.stderr.pipe(process.stdout)
-    
+
     ondata = (buf)->
       if (/CTRL-EVENT-CONNECTED/.test(buf)) or (/Key negotiation completed/.test(buf)) or (/-> GROUP_HANDSHAKE/.test(buf))
         connected = true
         clearInterval timeout
         d.resolve(true)
-      if (/CTRL-EVENT-DISCONNECTED/.test(buf)) 
+      if (/CTRL-EVENT-DISCONNECTED/.test(buf))
         connected = false
       "wlan0: Association request to the driver failed"
       return
@@ -309,7 +310,7 @@ class NetworkManager extends EventEmitter
       d.reject()
 
     d.promise
-  
+
   # This probably doesn't work yet
   _connectWEP: (network)=>
     d = Q.defer()
@@ -383,7 +384,8 @@ class NetworkManager extends EventEmitter
 
   disconnect: =>
     d = Q.defer()
-    @dhclient_kill().then(=>
+    @dhclient_kill()
+    .then =>
       if @connected
         console.log "Disconnecting!"
         command = "sudo iwconfig #{@wireless} essid \"\""
@@ -404,7 +406,6 @@ class NetworkManager extends EventEmitter
         d.resolve()
     , (err)->
       d.reject(err)
-    )
     d.promise
 
   enable: =>

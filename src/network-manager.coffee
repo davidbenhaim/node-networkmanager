@@ -8,8 +8,11 @@ spawn = require('child_process').spawn
 class NetworkManager extends EventEmitter
   wireless: 'wlan0'
   wired: 'eth0'
+  debug: false
 
-  constructor: (options={}) ->
+  constructor: (options={}, Logger) ->
+    unless Logger?
+      @Logger = console
     # List of networks (key is address)
     @networks = []
 
@@ -40,13 +43,13 @@ class NetworkManager extends EventEmitter
     @enabled = false
 
     process.on 'SIGINT', ()=>
-      console.log('Got SIGINT.  Killing Child Processes')
+      Logger.log('Got SIGINT.  Killing Child Processes')
       @clean_connection_processes()
       process.exit(1)
       return
 
     process.on 'SIGTERM', ()=>
-      console.log('Got SIGTERM.  Killing Child Processes')
+      Logger.log('Got SIGTERM.  Killing Child Processes')
       @clean_connection_processes()
       process.exit(1)
       return
@@ -176,7 +179,7 @@ class NetworkManager extends EventEmitter
             )
           .then(@_connectWPA)
         catch err
-          console.log err
+          @Logger.log err
           d.reject err
       else
         p = @_connectOPEN(network)
@@ -194,7 +197,7 @@ class NetworkManager extends EventEmitter
       )
       return
     , (err)->
-      console.log err
+      @Logger.log err
       @emit 'connection_failed'
       d.reject(err)
     )
@@ -203,11 +206,11 @@ class NetworkManager extends EventEmitter
 
   check_connection: =>
     if @connected
-      console.log "checking connection"
+      @Logger.log "checking connection" if @debug
       command = "sudo iwconfig #{@wireless}"
       exec(command, (error, stdout, stderr) =>
         if error
-          console.log "Error getting wireless devices information"
+          @Logger.log "Error getting wireless devices information"
           throw err
         content = stdout.toString()
         lines = content.split(/\r\n|\r|\n/)
@@ -221,11 +224,11 @@ class NetworkManager extends EventEmitter
 
         # guess we're not connected after all
         if not foundOutWereConnected and @connected
-          console.log "We've disconnected!"
+          @Logger.log "We've disconnected!"
           @connected = false
           @emit "disconnected", false
         else if foundOutWereConnected and not @connected
-          console.log "We're connected!"
+          @Logger.log "We're connected!"
           @connected = true
           @emit "join", false, @networks[networkAddress]
         return
@@ -237,29 +240,27 @@ class NetworkManager extends EventEmitter
   _connectOPEN: (network)=>
     d = Q.defer()
     command = "sudo iwconfig #{@wireless} essid \"#{network.ESSID}\""
-    exec(command, (error, stdout, stderr)->
+    exec command, (error, stdout, stderr) =>
       # TODO: what can go wrong here?
       if error or stderr
-        console.log(error)
-        console.log(stderr)
+        @Logger.error(error)
+        @Logger.error(stderr)
         d.reject(error)
         return
       d.resolve(true)
       return
-    )
     d.promise
 
 
   _write_wpa_password_file: (network)=>
     d = Q.defer()
     command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > /tmp/wpa_supplicant.conf"
-    exec(command, (error, stdout, stderr)->
+    exec command, (error, stdout, stderr) =>
       if error or stderr
-        console.log stdout
+        @Logger.log stdout
         d.reject error
         return
       d.resolve(network)
-    )
     d.promise
 
   _connectWPA: (network) =>
@@ -270,13 +271,13 @@ class NetworkManager extends EventEmitter
 
     timeout = setTimeout(=>
       unless @connected
-        console.log "Re-Connecting"
+        @Logger.log "Re-Connecting"
         exec('sudo kill ' + wps.pid)
-        @_connectWPA(network).then((connected)->
+        @_connectWPA(network)
+        .then (connected)->
           d.resolve(connected)
         , (err)->
           d.reject(err)
-        )
       return
     , 20*1000)
 
@@ -301,12 +302,12 @@ class NetworkManager extends EventEmitter
     wps.stdout.on('data', ondata)
     wps.stderr.on('data', ondata)
 
-    wps.on "error", (err) ->
-      console.log "error", err
+    wps.on "error", (err) =>
+      @Logger.log "error", err
       d.reject()
 
-    wps.on "close", ->
-      console.log "close"
+    wps.on "close", =>
+      @Logger.log "close"
       d.reject()
 
     d.promise
@@ -318,8 +319,8 @@ class NetworkManager extends EventEmitter
     exec(command, (error, stdout, stderr)->
       # TODO: what can go wrong here?
       if error or stderr
-        console.log(error)
-        console.log(stderr)
+        @Logger.error(error)
+        @Logger.error(stderr)
         d.reject(error)
         return
       d.resolve(true)
@@ -331,55 +332,54 @@ class NetworkManager extends EventEmitter
     d = Q.defer()
     iface = iface or @wireless
     command = "sudo dhclient #{iface}"
-    dhclient = exec(command, (error, stdout, stderr)=>
+    dhclient = exec command, (error, stdout, stderr) =>
       # TODO: what can go wrong here?
       if error or stderr
         if stderr.indexOf("RTNETLINK answers: File exists") isnt -1
-          @dhclient_release().then(=> @dhclient()).then(->
+          @dhclient_release()
+          .then(=> @dhclient())
+          .then(->
             d.resolve(true)
           )
         else
-          console.log(stderr)
+          @Logger.error(stderr)
           d.reject(error)
         return
-      console.log('dhclient!')
+      @Logger.debug('dhclient!')
       d.resolve(true)
       return
-    )
     d.promise
 
   dhclient_release: (iface) =>
     d = Q.defer()
     iface = iface or @wireless
     command = "sudo dhclient #{iface} -r"
-    exec(command, (error, stdout, stderr)->
+    exec command, (error, stdout, stderr) =>
       # TODO: what can go wrong here?
       if error or stderr
-        console.log(error)
-        console.log(stderr)
+        @Logger.error(error)
+        @Logger.error(stderr)
         d.reject(error)
         return
-      console.log('dhclient -r')
+      @Logger.log('dhclient -r')
       d.resolve(true)
       return
-    )
     d.promise
 
   dhclient_kill: (iface) =>
     d = Q.defer()
     iface = iface or @wireless
     command = "sudo dhclient #{iface} -x"
-    exec(command, (error, stdout, stderr)->
+    exec command, (error, stdout, stderr) =>
       # TODO: what can go wrong here?
       if error or stderr
-        console.log(error)
-        console.log(stderr)
+        @Logger.error(error)
+        @Logger.error(stderr)
         d.reject(error)
         return
-      console.log('dhclient -k')
+      @Logger.log('dhclient -k')
       d.resolve(true)
       return
-    )
     d.promise
 
   disconnect: =>
@@ -387,33 +387,32 @@ class NetworkManager extends EventEmitter
     @dhclient_kill()
     .then =>
       if @connected
-        console.log "Disconnecting!"
+        @Logger.log "Disconnecting!"
         command = "sudo iwconfig #{@wireless} essid \"\""
-        exec(command, (error, stdout, stderr)=>
+        exec command, (error, stdout, stderr) =>
           if error or stderr
-            console.log(error)
-            console.log(stderr)
+            @Logger.error(error)
+            @Logger.error(stderr)
             d.reject(error)
             return
-          console.log "Disconnected!"
+          @Logger.log "Disconnected!"
           @connected = false
           @emit 'disconnected'
           @clean_connection_processes()
           d.resolve()
           return
-        )
       else
         d.resolve()
-    , (err)->
+    , (err) ->
       d.reject(err)
     d.promise
 
   enable: =>
     d = Q.defer()
     unless @enabled
-      console.log "Enabling!"
+      @Logger.log "Enabling!"
       command = "sudo ifconfig #{@wireless} up"
-      exec(command, (error, stdout, stderr)=>
+      exec command, (error, stdout, stderr) =>
         if error?
           if error.message.indexOf("No such device")
             @emit('fatal', false, "The interface " + @wireless + " does not exist.")
@@ -424,11 +423,10 @@ class NetworkManager extends EventEmitter
 
         if stdout or stderr
           @emit('error', false, "There was an error enabling the interface" + stdout + stderr)
-        console.log "Enabled!"
+        @Logger.log "Enabled!"
         @enabled = true
         d.resolve()
         return
-      )
     else
       d.resolve()
 
@@ -439,12 +437,12 @@ class NetworkManager extends EventEmitter
     d = Q.defer()
 
     if @enabled
-      console.log "Disabling!"
+      @Logger.log "Disabling!"
       command = "sudo ifconfig #{@wireless} down"
       @dhclient_kill()
       @connecting = false
       @clean_connection_processes()
-      exec(command, (error, stdout, stderr)=>
+      exec command, (error, stdout, stderr) =>
         if error?
           if error.message.indexOf("No such device")
             @emit('fatal', false, "The interface " + @wireless + " does not exist.")
@@ -455,11 +453,10 @@ class NetworkManager extends EventEmitter
 
         if stdout or stderr
           @emit('error', false, "There was an error enabling the interface" + stdout + stderr)
-        console.log "Disabled!"
+        @Logger.log "Disabled!"
         @enabled = false
         d.resolve()
         return
-      )
     else
       d.resolve()
 

@@ -1,6 +1,6 @@
 {
   "name": "network-manager",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "A Network Interface Manager written in Node.js",
   "main": "index.js",
   "scripts": {

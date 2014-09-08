@@ -10,14 +10,15 @@ class NetworkManager extends EventEmitter
   wired: 'eth0'
   debug: false
 
-  constructor: (options={}, Logger) ->
-    unless Logger?
+  constructor: (options={}, @Logger) ->
+    unless @Logger?
       @Logger = console
     # List of networks (key is address)
     @networks = []
 
     # Debug console
-    @debug = true
+    if process.env.DEBUG
+      @debug = true
 
     # Update interface names
     if options.wireless?
@@ -42,14 +43,14 @@ class NetworkManager extends EventEmitter
     # Is the wireless interface up?
     @enabled = false
 
-    process.on 'SIGINT', ()=>
-      Logger.log('Got SIGINT.  Killing Child Processes')
+    process.on 'SIGINT', () =>
+      @Logger.log('Got SIGINT.  Killing Child Processes')
       @clean_connection_processes()
       process.exit(1)
       return
 
-    process.on 'SIGTERM', ()=>
-      Logger.log('Got SIGTERM.  Killing Child Processes')
+    process.on 'SIGTERM', () =>
+      @Logger.log('Got SIGTERM.  Killing Child Processes')
       @clean_connection_processes()
       process.exit(1)
       return
@@ -258,6 +259,7 @@ class NetworkManager extends EventEmitter
     exec command, (error, stdout, stderr) =>
       if error or stderr
         @Logger.log stdout
+        @Logger.error stderr
         d.reject error
         return
       d.resolve(network)

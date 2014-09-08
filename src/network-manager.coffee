@@ -207,7 +207,7 @@ class NetworkManager extends EventEmitter
 
   check_connection: =>
     if @connected
-      @Logger.log "checking connection" if @debug
+      @Logger.debug "checking connection"
       command = "sudo iwconfig #{@wireless}"
       exec(command, (error, stdout, stderr) =>
         if error

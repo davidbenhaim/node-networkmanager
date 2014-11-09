@@ -9,7 +9,9 @@ try{
 	nm.connect(network)
 	.then(
 		function(connected){
-			nm.disconnect().then(function(){
+			console.log("connected!");
+			nm.disconnect()
+			.then(function(){
 				console.log("Disconnected!");
 			})
 		},

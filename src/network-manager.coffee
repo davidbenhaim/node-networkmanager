@@ -12,9 +12,17 @@ class NetworkManager extends EventEmitter
 
   constructor: (options={}, @Logger) ->
     unless @Logger?
-      @Logger = console
+      @Logger =
+        debug: console.log
+        error: console.log
+        log: console.log
+
     # List of networks (key is address)
     @networks = []
+
+    @processes =
+      dhclient: null
+      wpa: null
 
     # Debug console
     if process.env.DEBUG
@@ -107,9 +115,23 @@ class NetworkManager extends EventEmitter
     d.promise
 
   clean_connection_processes: ->
-    if @wpa?
-      exec('sudo kill ' + @wpa.pid)
+    if @processes.wpa?
+      @killProcess(@processes.wpa.pid)
+    if @processes.dhclient?
+      @killProcess(@processes.dhclient.pid)
     return
+
+  killProcess: (pid) ->
+    d = Q.defer()
+    exec("sudo kill #{pid}", (err, stdout, stderr) ->
+      if err? or stderr
+        console.log stderr
+        console.log err.message
+        return d.reject()
+      console.log stdout
+      d.resolve()
+    )
+    d.promise
 
   parseScan: (scanResults) ->
     lines = scanResults.split(/\r\n|\r|\n/)
@@ -238,7 +260,7 @@ class NetworkManager extends EventEmitter
 
 
   # This probably doesn't work yet
-  _connectOPEN: (network)=>
+  _connectOPEN: (network) =>
     d = Q.defer()
     command = "sudo iwconfig #{@wireless} essid \"#{network.ESSID}\""
     exec command, (error, stdout, stderr) =>
@@ -294,7 +316,7 @@ class NetworkManager extends EventEmitter
     ondata = (buf)->
       if (/CTRL-EVENT-CONNECTED/.test(buf)) or (/Key negotiation completed/.test(buf)) or (/-> GROUP_HANDSHAKE/.test(buf))
         connected = true
-        clearInterval timeout
+        clearTimeout timeout
         d.resolve(true)
       if (/CTRL-EVENT-DISCONNECTED/.test(buf))
         connected = false
@@ -333,23 +355,28 @@ class NetworkManager extends EventEmitter
   dhclient: (iface) =>
     d = Q.defer()
     iface = iface or @wireless
-    command = "sudo dhclient #{iface}"
-    dhclient = exec command, (error, stdout, stderr) =>
-      # TODO: what can go wrong here?
-      if error or stderr
-        if stderr.indexOf("RTNETLINK answers: File exists") isnt -1
-          @dhclient_release()
-          .then(=> @dhclient())
-          .then(->
-            d.resolve(true)
-          )
-        else
-          @Logger.error(stderr)
-          d.reject(error)
-        return
-      @Logger.debug('dhclient!')
-      d.resolve(true)
-      return
+    @processes.dhclient = dhclient = spawn("sudo", ["dhclient", iface, "-d"])
+    dhclient.stdout.on('data', (data) ->
+      @Logger.log data.toString()
+    )
+    dhclient.stderr.on('data', (data) =>
+      @Logger.debug "dhclient error: " + data.toString()
+      if /RTNETLINK answers: File exists/.test(data) or /No working leases in persistent database - sleeping./.test(data)
+        @killProcess(dhclient.pid)
+        .then(@dhclient_release)
+        .then(@dhclient)
+        .then(->
+          d.resolve()
+        )
+      else if /bound\sto\s[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\s--\srenewal\sin\s\d.*\sseconds\./.test(data)
+        d.resolve()
+    )
+    dhclient.on('close', (code) ->
+      @Logger.log "dhclient closed: " + code
+    )
+    dhclient.on('error', (err) ->
+      @Logger.log "dhclient error: " + err
+    )
     d.promise
 
   dhclient_release: (iface) =>
@@ -364,7 +391,7 @@ class NetworkManager extends EventEmitter
         d.reject(error)
         return
       @Logger.log('dhclient -r')
-      d.resolve(true)
+      d.resolve()
       return
     d.promise
 

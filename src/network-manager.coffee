@@ -476,10 +476,11 @@ class NetworkManager extends EventEmitter
           @connected = false
           @emit 'disconnected'
           @clean_connection_processes()
-          .then ->
+          .then( ->
             d.resolve()
           , (err) ->
             d.reject err
+          )
           return
         )
       else

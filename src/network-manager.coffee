@@ -36,7 +36,7 @@ class NetworkManager extends EventEmitter
       @wired = options.wired
 
     # ID for connection checking interval
-    @connectionSpy = setInterval @check_connection, 5*1000
+    @connectionSpy = setInterval(@check_connection, 5*1000)
 
     # True if we're shutting down
     @killing = false
@@ -54,15 +54,17 @@ class NetworkManager extends EventEmitter
     process.on 'SIGINT', () =>
       @Logger.log('Got SIGINT.  Killing Child Processes')
       @clean_connection_processes()
-      .then ->
+      .then( ->
         process.exit(1)
+      )
       return
 
     process.on 'SIGTERM', () =>
       @Logger.log('Got SIGTERM.  Killing Child Processes')
       @clean_connection_processes()
-      .then ->
+      .then(->
         process.exit(1)
+      )
       return
 
     # Configuration settings
@@ -87,7 +89,8 @@ class NetworkManager extends EventEmitter
   ###
   scan: ->
     d = Q.defer()
-    @enable().then(=>
+    @enable()
+    .then(=>
       command = "sudo iwlist #{@wireless} scan"
       exec(command, (error, stdout, stderr)=>
         if error?
@@ -122,7 +125,7 @@ class NetworkManager extends EventEmitter
     @processes.wpa = null
     promises.push @killProcessByName("dhclient #{@wireless}")
     @processes.dhclient = null
-    return Q.all promises
+    return Q.all(promises)
 
   killProcess: (pid) ->
     d = Q.defer()
@@ -204,7 +207,7 @@ class NetworkManager extends EventEmitter
         network.encryption_wpa = true
       return
 
-    networks.push network  unless _.isEmpty(network)
+    networks.push(network)  unless _.isEmpty(network)
     networks
 
   connect: (network) =>
@@ -217,7 +220,7 @@ class NetworkManager extends EventEmitter
       p = p.promise
 
     @connecting = true
-    @emit 'connecting', network
+    @emit('connecting', network)
 
     p.then(@enable).then(=>
       if network.encryption_wep
@@ -291,7 +294,7 @@ class NetworkManager extends EventEmitter
   _connectOPEN: (network) =>
     d = Q.defer()
     command = "sudo iwconfig #{@wireless} essid \"#{network.ESSID}\""
-    exec command, (error, stdout, stderr) =>
+    exec(command, (error, stdout, stderr) =>
       # TODO: what can go wrong here?
       if error or stderr
         @Logger.error(error)
@@ -300,6 +303,7 @@ class NetworkManager extends EventEmitter
         return
       d.resolve(true)
       return
+    )
     d.promise
 
 
@@ -308,9 +312,9 @@ class NetworkManager extends EventEmitter
     command = "sudo wpa_passphrase \"#{network.ESSID}\" #{network.PASSWORD} > /tmp/wpa_supplicant.conf"
     exec command, (error, stdout, stderr) =>
       if error or stderr
-        @Logger.log stdout
-        @Logger.error stderr
-        d.reject error
+        @Logger.log(stdout)
+        @Logger.error(stderr)
+        d.reject(error)
         return
       d.resolve(network)
     d.promise
@@ -319,18 +323,19 @@ class NetworkManager extends EventEmitter
     d = Q.defer()
     unless attempt > 5
       @clean_connection_processes()
-      .then =>
+      .then( =>
         args = ["wpa_supplicant", '-d', "-i#{@wireless}", '-Dwext', '-c/tmp/wpa_supplicant.conf']
         wps = spawn("sudo", args)
 
         timeout = setTimeout(=>
           unless @connected
             @Logger.log "Re-Connecting"
-            @_connectWPA(network, attempt++)
-            .then (connected) ->
+            @_connectWPA(network, attempt + 1)
+            .then((connected) ->
               d.resolve(connected)
             , (err) ->
               d.reject(err)
+            )
           return
         , 20*1000)
 
@@ -345,7 +350,7 @@ class NetworkManager extends EventEmitter
         ondata = (buf) ->
           if (/CTRL-EVENT-CONNECTED/.test(buf)) or (/Key negotiation completed/.test(buf)) or (/-> GROUP_HANDSHAKE/.test(buf))
             connected = true
-            clearTimeout timeout
+            clearTimeout(timeout)
             d.resolve(true)
           if (/CTRL-EVENT-DISCONNECTED/.test(buf))
             connected = false
@@ -355,19 +360,22 @@ class NetworkManager extends EventEmitter
         wps.stdout.on('data', ondata)
         wps.stderr.on('data', ondata)
 
-        wps.on "error", (err) =>
-          @Logger.log "error", err
+        wps.on("error", (err) =>
+          @Logger.log("error", err)
           d.reject()
+        )
 
-        wps.on "close", (code) =>
-          @Logger.log "close: #{code}"
+        wps.on("close", (code) =>
+          @Logger.log("close: #{code}")
           if code
-            clearTimeout timeout
+            clearTimeout(timeout)
             d.reject()
+        )
       , (err) ->
-        d.reject err
+        d.reject(err)
+      )
     else
-      d.reject "Cannot Connect"
+      d.reject("Cannot Connect")
     d.promise
 
   # This probably doesn't work yet
@@ -417,7 +425,7 @@ class NetworkManager extends EventEmitter
     d = Q.defer()
     iface = iface or @wireless
     command = "sudo dhclient #{iface} -r"
-    exec command, (error, stdout, stderr) =>
+    exec(command, (error, stdout, stderr) =>
       # TODO: what can go wrong here?
       if error or stderr
         @Logger.error(error)
@@ -427,13 +435,14 @@ class NetworkManager extends EventEmitter
       @Logger.log('dhclient -r')
       d.resolve()
       return
+    )
     d.promise
 
   dhclient_kill: (iface) =>
     d = Q.defer()
     iface = iface or @wireless
     @killProcessByName("dhclient #{iface}")
-    .then =>
+    .then(=>
       command = "sudo dhclient #{iface} -x"
       exec command, (error, stdout, stderr) =>
         # TODO: what can go wrong here?
@@ -447,16 +456,17 @@ class NetworkManager extends EventEmitter
         return
       , (err) ->
         d.reject err
+    )
     d.promise
 
   disconnect: =>
     d = Q.defer()
     @dhclient_kill()
-    .then =>
+    .then(=>
       if @connected
         @Logger.log "Disconnecting!"
         command = "sudo iwconfig #{@wireless} essid \"\""
-        exec command, (error, stdout, stderr) =>
+        exec(command, (error, stdout, stderr) =>
           if error or stderr
             @Logger.error(error)
             @Logger.error(stderr)
@@ -471,10 +481,12 @@ class NetworkManager extends EventEmitter
           , (err) ->
             d.reject err
           return
+        )
       else
         d.resolve()
     , (err) ->
       d.reject(err)
+    )
     d.promise
 
   enable: =>
@@ -482,7 +494,7 @@ class NetworkManager extends EventEmitter
     unless @enabled
       @Logger.log "Enabling!"
       command = "sudo ifconfig #{@wireless} up"
-      exec command, (error, stdout, stderr) =>
+      exec(command, (error, stdout, stderr) =>
         if error?
           if error.message.indexOf("No such device")
             @emit('fatal', false, "The interface " + @wireless + " does not exist.")
@@ -497,6 +509,7 @@ class NetworkManager extends EventEmitter
         @enabled = true
         d.resolve()
         return
+      )
     else
       d.resolve()
     d.promise
@@ -510,8 +523,8 @@ class NetworkManager extends EventEmitter
       command = "sudo ifconfig #{@wireless} down"
       @connecting = false
       @clean_connection_processes()
-      .then =>
-        exec command, (error, stdout, stderr) =>
+      .then(=>
+        exec(command, (error, stdout, stderr) =>
           if error?
             if error.message.indexOf("No such device")
               @emit('fatal', false, "The interface " + @wireless + " does not exist.")
@@ -526,8 +539,10 @@ class NetworkManager extends EventEmitter
           @enabled = false
           d.resolve()
           return
+        )
       , (err) ->
         d.reject err
+      )
     else
       d.resolve()
 
